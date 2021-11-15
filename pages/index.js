@@ -1,66 +1,48 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { GoogleAuthProvider, getAuth, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import Head from 'next/head';
+import Image from 'next/image';
+import styles from '../styles/Home.module.css';
+import { getStorage, ref, uploadBytes } from "firebase/storage";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
-
-import { useEffect } from 'react';
-// import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDbL1UTVRXW-u9mFazIwtHP1iedNmNOf8M",
-  authDomain: "mdia-week9.firebaseapp.com",
-  projectId: "mdia-week9",
-  storageBucket: "mdia-week9.appspot.com",
-  messagingSenderId: "628865134395",
-  appId: "1:628865134395:web:cda264beddd811e50a911e",
-  // measurementId: "G-80NLL75K4M"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
-
+import { useState } from 'react';
 
 export default function Home() {
+  const [em, setEm] = useState("");
+  const [ps, setPs] = useState("");
+  const Upload = async(e)=>{
+    console.log(e.target.files[0]);
+    if(e.target.files.length <=0){
+      alert("no files were selected");
+      return false;
+    }
+    const file = e.target.files[0];
+    const storage = getStorage();
+    const storageRef = ref(storage, 'test.jpg');
 
-  useEffect(()=>{
-    const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-          console.log("signed in", user);
-        } else {
-          console.log("Not signed in")
-        }
-      })
-  }, []);
-    
-
-  const SignInGoogle = async() => {
-    //get Google's authentication server
-    const provider = new GoogleAuthProvider();
-    //get Firebase's authentication server
-    const auth = getAuth();
-
-    const result = await signInWithPopup(auth, provider); //if u r signed in properly, it will let you through firebase
-    console.log(result);
+    // 'file' comes from the Blob or File API
+    const snapshot = await uploadBytes(storageRef, file);
+    console.log("uploaded");
   }
 
-  const SignOutFire = async()=>{
+  const CreateUser = async()=>{
     const auth = getAuth();
-    await signOut(auth);
+    const result = await createUserWithEmailAndPassword(auth, em, ps);
+    alert("created!");
   }
 
-  return (
+  const SignIn = async()=>{
+    const auth = getAuth();
+    const result = await signInWithEmailAndPassword(auth, em, ps);
+    alert("Signed In!");
+  }
+
+  return(
     <div className={styles.container}>
-      <button onClick={SignInGoogle}>Sign in with Google</button>
-      <button onClick={SignOutFire}>Sign out</button>
+      <input type='text' placeholder='email' onChange={(e)=>setEm(e.target.value)} />
+      <input type='password' placeholder='password' onChange={(e)=>setPs(e.target.value)} />
+      <button onClick={SignIn}>Sign In</button>
+      <button onClick={CreateUser}>Create Account</button>
+      <input type='file' onChange={Upload}/>
     </div>
   )
 }
